@@ -25,6 +25,7 @@ Full rules: [docs/specification.md](docs/specification.md).
 | `src/game.js` | Game logic, question builder, share image |
 | `data/*.md` | Vocabulary extracted from the two PDFs |
 | `tools/build.py` | Checks the word counts and builds `index.html` |
+| `.github/workflows/pages.yml` | Builds and deploys to GitHub Pages |
 
 ## Building
 
@@ -33,6 +34,12 @@ python3 tools/build.py
 ```
 
 The build stops and lists what's missing if it doesn't find exactly 5,511 Spanish and 3,549 Chinese entries.
+
+## Publishing on GitHub Pages
+
+`.github/workflows/pages.yml` runs the build on every push and pull request. A run fails if the word counts are wrong. Pushes to `main` are deployed to GitHub Pages.
+
+One-time setup: in the repository go to **Settings → Pages → Build and deployment → Source** and choose **GitHub Actions**. After the next push to `main`, or a manual run from the Actions tab, the game is live at `https://<owner>.github.io/<repo>/`.
 
 ## Adding a background theme
 

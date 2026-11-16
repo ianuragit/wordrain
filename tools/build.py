@@ -5,8 +5,9 @@ Reads the vocabulary extracted from the two source PDFs (data/*.md),
 checks that every entry is present, and inlines the word lists, styles,
 themes and game code into index.html.
 
-Usage: python3 tools/build.py
+Usage: python3 tools/build.py [--out PATH]   (default: index.html)
 """
+import argparse
 import json
 import re
 import sys
@@ -96,6 +97,10 @@ def parse_chinese(path):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--out", type=Path, default=OUT, help="where to write the built page")
+    out = parser.parse_args().out.resolve()
+
     levels, es_topics, es, es_problems = parse_spanish(DATA / "spanish_vocabulary.md")
     zh_themes, zh, zh_problems = parse_chinese(DATA / "chinese_vocabulary.md")
 
@@ -133,8 +138,9 @@ def main():
         if marker not in html:
             sys.exit(f"template marker {marker} missing")
         html = html.replace(marker, content)
-    OUT.write_text(html, encoding="utf-8")
-    print(f"Wrote {OUT.relative_to(ROOT)} ({OUT.stat().st_size / 1024:.0f} KB)")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(html, encoding="utf-8")
+    print(f"Wrote {out} ({out.stat().st_size / 1024:.0f} KB)")
 
 
 if __name__ == "__main__":
