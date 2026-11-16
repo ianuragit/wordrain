@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1a0b2e">
+<meta name="description" content="WordRain: catch falling Spanish and Chinese vocabulary before it lands.">
+<title>WordRain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+<style>
+/*__STYLE__*/
+</style>
+</head>
+<body>
+<canvas id="scene" aria-hidden="true"></canvas>
+
+<main id="app">
+  <!-- 1. Welcome -->
+  <section class="screen" id="screen-welcome" data-screen="welcome">
+    <div class="card">
+      <h1 class="title" data-game-title>WordRain</h1>
+      <p class="tagline">Catch the word before it lands.<br><span lang="es">Español</span> · <span lang="zh-CN">中文</span></p>
+      <form id="welcome-form" autocomplete="off">
+        <label for="name" class="label">Your name</label>
+        <input id="name" name="name" type="text" maxlength="16" required placeholder="Up to 16 characters" spellcheck="false" enterkeyhint="go">
+        <div id="theme-picker" class="theme-picker" hidden>
+          <label for="theme" class="label">Background</label>
+          <select id="theme"></select>
+        </div>
+        <button type="submit" class="btn btn-primary" id="start-btn" disabled>Start</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- 2. Language -->
+  <section class="screen" id="screen-language" data-screen="language" hidden>
+    <div class="card">
+      <h2 class="heading">Choose a language</h2>
+      <div class="choice-grid two">
+        <button class="btn btn-choice" data-lang="es"><span class="big" lang="es">Español</span><span class="sub">Spanish ↔ English · <span data-count="es"></span> words</span></button>
+        <button class="btn btn-choice" data-lang="zh"><span class="big" lang="zh-CN">中文</span><span class="sub">Simplified Chinese · HSK 4+ · <span data-count="zh"></span> words</span></button>
+      </div>
+      <button class="btn btn-link" data-back="welcome">← Back</button>
+    </div>
+  </section>
+
+  <!-- 3. Mode (Chinese only) -->
+  <section class="screen" id="screen-mode" data-screen="mode" hidden>
+    <div class="card">
+      <h2 class="heading">Choose a mode</h2>
+      <div class="choice-grid">
+        <button class="btn btn-choice" data-mode="cm"><span class="big">Character → Meaning</span><span class="sub"><span lang="zh-CN">汉字</span> → English</span></button>
+        <button class="btn btn-choice" data-mode="cp"><span class="big">Character → Pinyin</span><span class="sub"><span lang="zh-CN">汉字</span> → pīnyīn</span></button>
+        <button class="btn btn-choice" data-mode="mc"><span class="big">Meaning → Character</span><span class="sub">English → <span lang="zh-CN">汉字</span></span></button>
+        <button class="btn btn-choice" data-mode="mix"><span class="big">Mix</span><span class="sub">All three, at random</span></button>
+      </div>
+      <button class="btn btn-link" data-back="language">← Back</button>
+    </div>
+  </section>
+
+  <!-- 4. Play -->
+  <section class="screen" id="screen-play" data-screen="play" hidden>
+    <header class="hud">
+      <div class="hud-row">
+        <span class="hud-name" id="hud-name"></span>
+        <span class="hud-time" id="hud-time" aria-label="Elapsed time">0:00</span>
+        <div class="hud-buttons">
+          <button class="icon-btn" id="mute-btn" aria-label="Mute sound" title="Mute">♪</button>
+          <button class="icon-btn" id="pause-btn" aria-label="Pause (P)" title="Pause (P)">❚❚</button>
+        </div>
+      </div>
+      <div class="hud-row">
+        <span class="hud-stat"><span class="hud-label">Score</span> <b id="hud-score">0</b></span>
+        <span class="hud-stat"><span class="hud-label">Level</span> <b id="hud-level">1</b></span>
+        <span class="hud-lives" id="hud-lives" aria-label="Lives"></span>
+      </div>
+    </header>
+
+    <div class="field" id="field">
+      <div class="mode-chip" id="mode-chip"></div>
+      <div class="word" id="word"><span class="word-text" id="word-text"></span></div>
+      <div class="reveal" id="reveal" hidden>
+        <div class="reveal-hz" id="reveal-hz" lang="zh-CN"></div>
+        <div class="reveal-py" id="reveal-py"></div>
+        <div class="reveal-en" id="reveal-en"></div>
+      </div>
+      <div class="particles" id="particles"></div>
+      <div class="countdown" id="countdown" hidden></div>
+      <div class="pause-overlay" id="pause-overlay" hidden>
+        <div class="card small">
+          <h2 class="heading">Paused</h2>
+          <p class="muted">The word is hidden while paused.</p>
+          <button class="btn btn-primary" id="resume-btn">Resume</button>
+        </div>
+      </div>
+      <div class="ground" aria-hidden="true"></div>
+    </div>
+
+    <div class="options" id="options">
+      <button class="option" data-opt="0"><span class="key">1 / A</span><span class="opt-text"></span></button>
+      <button class="option" data-opt="1"><span class="key">2 / S</span><span class="opt-text"></span></button>
+      <button class="option" data-opt="2"><span class="key">3 / D</span><span class="opt-text"></span></button>
+    </div>
+  </section>
+
+  <!-- 5. Level up / 6. Game over (shared layout) -->
+  <section class="screen" id="screen-result" data-screen="result" hidden>
+    <div class="card result">
+      <h2 class="heading" id="result-heading"></h2>
+      <button class="share-preview" id="share-preview" aria-label="View share image full screen">
+        <img id="share-img" alt="Share image with your score">
+      </button>
+      <div class="result-actions">
+        <button class="btn" id="download-btn">Download</button>
+        <button class="btn btn-primary" id="continue-btn">Continue</button>
+      </div>
+      <p class="muted small-print" id="result-hint"></p>
+    </div>
+  </section>
+</main>
+
+<div class="fullscreen" id="fullscreen" hidden>
+  <img id="fullscreen-img" alt="Share image. Long-press to save.">
+  <p>Long-press the image to save it, then share it.</p>
+  <button class="btn" id="fullscreen-close">Close</button>
+</div>
+
+<script>
+/*__VOCAB__*/
+</script>
+<script>
+/*__THEMES__*/
+</script>
+<script>
+/*__GAME__*/
+</script>
+</body>
+</html>
